@@ -23,6 +23,9 @@ def train_test_split(df: pd.core.frame.DataFrame, test_size=0.25) -> tuple:
 def print_info(message: str) -> None:
     print(f'{CYANB}{BWHITE}[INFO]{RESET}{BWHITE} {message}{RESET}')
 
+def list_of_ints(arg):
+    return list(map(int, arg.split()))
+
 if __name__ == '__main__':
     df = load_dataset('datasets/data.csv')
     print(df.columns)

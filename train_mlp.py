@@ -13,19 +13,34 @@ class MultilayerPerceptron:
         self.y_train = y_train
         self.y_test = y_test
         self.hidden_layers = args.layer
+        self.layer_sizes = [32, 32, 32]
         self.epochs = args.epochs
         self.learning_rate = args.learning_rate
         self.loss_function = args.loss
         self.batch_size = args.batch_size
     
+    def init_layers(self):
+        hidden_layers = [np.empty((self.batch_size, layer_size)) for layer_size in self.layer_sizes]
+        return hidden_layers
+
+    def init_weights(self):
+        self.weights = []
+        for i in range(len(self.layer_sizes) - 1):
+            self.weights.append(np.random.uniform(-1, 1, size=[self.layer_sizes[i], self.layer_sizes[i+1]]))
+        self.weights = np.asarray(self.weights)
+
     def create_network(self):
         pass
 
-    def sigmoid_function(self, x: float) -> float:
+    def sigmoid_function(self, x) -> float:
         return 1 / (1 + np.exp(-x))
 
-    def softmax(self, x: float) -> float:
-        pass
+    def sigmoid_prime(self, sigmoid):
+        return sigmoid * (1 - sigmoid)
+
+    def softmax(self, x) -> float:
+        exp =  np.exp(x)
+        return exp / exp.sum()
 
     def binary_cross_entropy(self, y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray: # Loss function
         return -np.mean(y_true * np.log(y_pred + 1e-9) + (1 - y_true) * np.log(1 - y_pred + 1e-9))
@@ -34,13 +49,48 @@ class MultilayerPerceptron:
         return np.mean(y_pred == y_true)
 
     def feed_forward(self, batch):
-        pass
+        h_l = batch
+        self.hidden_layers[0] = h_l
+        for i, weight in enumerate(self.weights):
+            print(weight)
+            h_l = self.sigmoid_function(h_l.dot(weight))
+            self.hidden_layers[i+1]=h_l
+        output = self.softmax(self.hidden_layers[-1])
+        return output, self.hidden_layers
 
-    def back_propagation(self):
-        pass
+    def back_propagation(self, output, batch_y):
+        delta_t = (output - batch_y) * self.sigmoid_prime(self.hidden_layers[-1])
+        for i in range(1, len(self.weights) + 1):
+            self.weights[-i] -= self.learning_rate * (self.hidden_layers[-i-1].T.dot(delta_t))/ self.batch_size
+            delta_t = self.sigmoid_prime(self.hidden_layers[-i-1]) * (delta_t.dot(self.weights[-i].T))
 
     def fit(self):
-        pass
+        n_samples = self.X_train.shape[0]
+    
+        self.hidden_layers = self.init_layers()
+        self.init_weights()
+        for epoch in range(self.epochs):
+            shuffle = np.random.permutation(n_samples)
+            self.X_train = self.X_train.sample(frac=1)
+            X_batches = np.array_split(self.X_train, n_samples / self.batch_size)
+            Y_batches = np.array_split(self.y_train, n_samples / self.batch_size)
+            
+            train_loss = 0
+            train_acc = 0
+            
+            for batch_x,batch_y in zip(X_batches,Y_batches):
+                output, self.hidden_layers = self.feed_forward(batch_x)  
+                train_loss += self.loss(output, batch_y)
+                train_acc += self.accuracy(self.to_categorical(output), batch_y)
+                self.weights = self.back_propagation(output, batch_y)
+
+            train_loss = (train_loss / len(X_batches))
+            train_acc = (train_acc / len(X_batches))
+
+
+            print(f"Epoch {epoch+1}: loss = {train_loss.round(3)} | acc = {train_acc.round(3)}")
+        
+        return self.weights
 
     def save_weights(self, filename="weights.pkl") -> None:
         with open(filename, "wb") as f:
@@ -56,7 +106,7 @@ def main():
         description='Multilayer Perceptron')
     parser.add_argument('-dataset', type=str, default='datasets/data.csv',
         help='Path to a train dataset file to train the model')
-    parser.add_argument('-layer', type=tuple, default='(24, 24, 24)',
+    parser.add_argument('-layer', type=list_of_ints, default='24 24 24',
         help='Numbers of perceptrons for each layer')
     parser.add_argument('-epochs', type=int, default=700,
         help='Total number of iterations of all the training data '
