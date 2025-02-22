@@ -12,8 +12,8 @@ class MultilayerPerceptron:
         self.X_test = X_test
         self.y_train = y_train
         self.y_test = y_test
-        self.hidden_layers = args.layer
-        self.layer_sizes = [32, 32, 32]
+        print(self.y_train.shape)
+        self.layer_sizes = np.array([self.X_train.shape[1]] + [31] * 3 + [1])
         self.epochs = args.epochs
         self.learning_rate = args.learning_rate
         self.loss_function = args.loss
@@ -25,9 +25,11 @@ class MultilayerPerceptron:
 
     def init_weights(self):
         self.weights = []
-        for i in range(len(self.layer_sizes) - 1):
+        print(self.layer_sizes)
+        for i in range(self.layer_sizes.shape[0] - 1):
             self.weights.append(np.random.uniform(-1, 1, size=[self.layer_sizes[i], self.layer_sizes[i+1]]))
-        self.weights = np.asarray(self.weights)
+        print(self.weights)
+        # self.weights = np.asarray(self.weights)
 
     def create_network(self):
         pass
@@ -42,7 +44,7 @@ class MultilayerPerceptron:
         exp =  np.exp(x)
         return exp / exp.sum()
 
-    def binary_cross_entropy(self, y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray: # Loss function
+    def binary_cross_entropy(self, y_pred: np.ndarray, y_true: np.ndarray) -> np.ndarray: # Loss function
         return -np.mean(y_true * np.log(y_pred + 1e-9) + (1 - y_true) * np.log(1 - y_pred + 1e-9))
 
     def accuracy_score(self, y_true: np.ndarray, y_pred: np.ndarray) -> float:
@@ -52,9 +54,8 @@ class MultilayerPerceptron:
         h_l = batch
         self.hidden_layers[0] = h_l
         for i, weight in enumerate(self.weights):
-            print(weight)
             h_l = self.sigmoid_function(h_l.dot(weight))
-            self.hidden_layers[i+1]=h_l
+            self.hidden_layers[i+1] = h_l
         output = self.softmax(self.hidden_layers[-1])
         return output, self.hidden_layers
 
@@ -66,29 +67,31 @@ class MultilayerPerceptron:
 
     def fit(self):
         n_samples = self.X_train.shape[0]
+        self.y_train = np.where(self.y_train == 'B', 1, 0) # B or M
     
         self.hidden_layers = self.init_layers()
         self.init_weights()
         for epoch in range(self.epochs):
             shuffle = np.random.permutation(n_samples)
-            self.X_train = self.X_train.sample(frac=1)
+            # self.X_train = self.X_train.sample(frac=1)
             X_batches = np.array_split(self.X_train, n_samples / self.batch_size)
             Y_batches = np.array_split(self.y_train, n_samples / self.batch_size)
             
             train_loss = 0
             train_acc = 0
-            
-            for batch_x,batch_y in zip(X_batches,Y_batches):
-                output, self.hidden_layers = self.feed_forward(batch_x)  
-                train_loss += self.loss(output, batch_y)
-                train_acc += self.accuracy(self.to_categorical(output), batch_y)
-                self.weights = self.back_propagation(output, batch_y)
+            # print('shape: ', X_batches)
+            for batch_x, batch_y in zip(X_batches,Y_batches):
+                pred, self.hidden_layers = self.feed_forward(batch_x)
+                print(pred)
+                train_loss += self.binary_cross_entropy(pred, batch_y)
+                # train_acc += self.accuracy(self.to_categorical(output), batch_y)
+                self.weights = self.back_propagation(pred, batch_y)
 
             train_loss = (train_loss / len(X_batches))
-            train_acc = (train_acc / len(X_batches))
+            # train_acc = (train_acc / len(X_batches))
 
 
-            print(f"Epoch {epoch+1}: loss = {train_loss.round(3)} | acc = {train_acc.round(3)}")
+            print(f"Epoch {epoch+1}: loss = {train_loss.round(3)}")
         
         return self.weights
 
