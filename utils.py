@@ -12,6 +12,7 @@ def load_dataset(dataset_label: str) -> pd.core.frame.DataFrame:
 
 def train_test_split(df: pd.core.frame.DataFrame, test_size=0.25) -> tuple:
     df = df.sample(frac=1)
+    df.dropna(inplace=True)
     train_size = int(df.shape[0] * (1 - test_size))
 
     X_train = df[0:train_size]
