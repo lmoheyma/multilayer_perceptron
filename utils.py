@@ -19,8 +19,8 @@ def train_test_split(df: pd.core.frame.DataFrame, test_size=0.25) -> tuple:
     X_test = df[train_size:0]
     y_train = X_train['Diagnosis']
     y_test = X_test['Diagnosis']
-    X_train.drop(['Diagnosis'], axis = 1, inplace = True)
-    X_test.drop(['Diagnosis'], axis = 1, inplace = True)
+    X_train.drop(['Diagnosis', 'Index'], axis = 1, inplace = True)
+    X_test.drop(['Diagnosis', 'Index'], axis = 1, inplace = True)
 
     return X_train, X_test, y_train, y_test
 
