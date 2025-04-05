@@ -12,11 +12,7 @@ class MultilayerPerceptron:
         self.X_test = X_test
         self.y_train = y_train
         self.y_test = y_test
-        input_size = self.X_train.shape[1]
-        hidden_size1 = 64
-        hidden_size2 = 32
-        output_size = 1
-        self.layer_sizes = np.array([input_size, hidden_size1, hidden_size2, output_size])
+        self.layer_sizes = np.array([self.X_train.shape[1]] + args.layer + [1])
         self.epochs = args.epochs
         self.learning_rate = 0.1
         self.loss_function = args.loss
@@ -42,8 +38,7 @@ class MultilayerPerceptron:
 
     def binary_cross_entropy(self, y_pred: np.ndarray, y_true: np.ndarray) -> np.ndarray:
         epsilon = 1e-15
-        y_pred = np.clip(y_pred, epsilon, 1 - epsilon)
-        return -np.mean(y_true * np.log(y_pred) + (1 - y_true) * np.log(1 - y_pred))
+        return -np.mean(y_true * np.log(y_pred + epsilon) + (1 - y_true) * np.log(1 - y_pred + epsilon))
 
     def accuracy_score(self, y_true: np.ndarray, y_pred: np.ndarray) -> float:
         return np.mean(y_pred == y_true)
@@ -73,7 +68,6 @@ class MultilayerPerceptron:
         
         for epoch in range(self.epochs):
             self.init_layers()
-            shuffle = np.random.permutation(n_samples)
             X_batches = np.array_split(self.X_train, n_samples / self.batch_size)
             Y_batches = np.array_split(self.y_train, n_samples / self.batch_size)
             
@@ -106,9 +100,9 @@ def main():
         description='Multilayer Perceptron')
     parser.add_argument('-dataset', type=str, default='datasets/data.csv',
         help='Path to a train dataset file to train the model')
-    parser.add_argument('-layer', type=list_of_ints, default='24 24 24',
+    parser.add_argument('-layer', type=list_of_ints, default='32',
         help='Numbers of perceptrons for each layer')
-    parser.add_argument('-epochs', type=int, default=700,
+    parser.add_argument('-epochs', type=int, default=2000,
         help='Total number of iterations of all the training data '
         'in one cycle for training the model')
     parser.add_argument('-learning-rate', type=int, default=0.1,
@@ -123,6 +117,9 @@ def main():
     args = parser.parse_args()
     df = load_dataset(args.dataset)
     X_train, X_test, y_train, y_test = train_test_split(df)
+
+    X_train = min_max_scaling(X_train)
+    X_test = min_max_scaling(X_test)
 
     model = MultilayerPerceptron(X_train, X_test, y_train, y_test, args)
     model.fit()
