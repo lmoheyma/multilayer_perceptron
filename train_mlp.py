@@ -27,9 +27,12 @@ class MultilayerPerceptron:
 
     def init_weights(self):
         self.weights = []
+        self.biases = []
         for i in range(self.layer_sizes.shape[0] - 1):
             weight_shape = (self.layer_sizes[i], self.layer_sizes[i+1])
             self.weights.append(np.random.uniform(-0.1, 0.1, size=weight_shape))
+            bias_shape = (1, self.layer_sizes[i+1])
+            self.biases.append(np.zeros(bias_shape))
 
     def sigmoid_function(self, x) -> float:
         return 1 / (1 + np.exp(-x))
@@ -52,7 +55,8 @@ class MultilayerPerceptron:
         h_l = batch
         self.hidden_layers[0] = h_l
         for i, weight in enumerate(self.weights):
-            h_l = self.sigmoid_function(np.dot(h_l, weight))
+            z = np.dot(h_l, weight) + self.biases[i]
+            h_l = self.sigmoid_function(z)
             self.hidden_layers[i+1] = h_l  
         return h_l
 
@@ -65,8 +69,10 @@ class MultilayerPerceptron:
             delta = self.sigmoid_prime(self.hidden_layers[i+1]) * np.dot(deltas[i+1], self.weights[i+1].T)
             deltas[i] = delta
         for i in range(nb_layers):
-            grad = np.dot(self.hidden_layers[i].T, deltas[i]) / batch_y.shape[0]
-            self.weights[i] -= self.learning_rate * grad
+            grad_w = np.dot(self.hidden_layers[i].T, deltas[i]) / batch_y.shape[0]
+            grad_b = np.mean(deltas[i], axis=0, keepdims=True)
+            self.weights[i] -= self.learning_rate * grad_w
+            self.biases[i] -= self.learning_rate * grad_b
 
     def fit(self):
         n_samples = self.X_train.shape[0]
