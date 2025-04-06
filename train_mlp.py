@@ -19,7 +19,8 @@ class MultilayerPerceptron:
         self.batch_size = args.batch_size
         self.losses = []
         self.losses_test = []
-        self.accuracy_scores = []
+        self.accuracy = []
+        self.accuracy_test = []
 
     def init_layers(self, size):
         self.hidden_layers = [np.zeros((size, layer_size)) for layer_size in self.layer_sizes]
@@ -44,6 +45,7 @@ class MultilayerPerceptron:
         return -np.mean(y_true * np.log(y_pred + epsilon) + (1 - y_true) * np.log(1 - y_pred + epsilon))
 
     def accuracy_score(self, y_true: np.ndarray, y_pred: np.ndarray) -> float:
+        y_pred = (y_pred >= 0.5).astype(int)
         return np.mean(y_pred == y_true)
 
     def feed_forward(self, batch):
@@ -86,30 +88,31 @@ class MultilayerPerceptron:
             perm = np.random.permutation(n_samples)
             X_train = X_train[perm]
             y_train = y_train[perm]
-
             X_batches = np.array_split(X_train, n_samples / self.batch_size)
             y_batches = np.array_split(y_train, n_samples / self.batch_size)
-
             epoch_loss = 0
+            epoch_acc = 0
 
             for batch_x, batch_y in zip(X_batches, y_batches):
                 self.init_layers(len(batch_x))
                 output = self.feed_forward(batch_x)
-
-                loss = self.binary_cross_entropy(output, batch_y)
-                epoch_loss += loss
-
+                epoch_loss += self.binary_cross_entropy(output, batch_y)
+                epoch_acc += self.accuracy_score(batch_y, output)
                 self.back_propagation(output, batch_y)
 
             epoch_loss /= len(X_batches)
+            epoch_acc /= len(X_batches)
             self.losses.append(epoch_loss)
+            self.accuracy.append(epoch_acc)
 
             self.init_layers(X_test.shape[0])
             val_pred = self.feed_forward(X_test)
             val_loss = self.binary_cross_entropy(val_pred, y_test)
+            val_acc = self.accuracy_score(y_test, val_pred)
             self.losses_test.append(val_loss)
+            self.accuracy_test.append(val_acc)
 
-            print(f"Epoch {epoch+1}/{self.epochs} - train_loss: {epoch_loss:.4f} - val_loss: {val_loss:.4f}")
+            print(f"Epoch {epoch+1}/{self.epochs} - train_loss: {epoch_loss:.4f} - val_loss: {val_loss:.4f} - train_acc: {epoch_acc:.4f} - val_acc: {val_acc:.4f}")
 
         return self.weights
 
@@ -127,9 +130,9 @@ def main():
         description='Multilayer Perceptron')
     parser.add_argument('-dataset', type=str, default='datasets/data.csv',
         help='Path to a train dataset file to train the model')
-    parser.add_argument('-layer', type=list_of_ints, default='24',
+    parser.add_argument('-layer', type=list_of_ints, default='24 24',
         help='Numbers of perceptrons for each layer')
-    parser.add_argument('-epochs', type=int, default=84,
+    parser.add_argument('-epochs', type=int, default=200,
         help='Total number of iterations of all the training data '
         'in one cycle for training the model')
     parser.add_argument('-learning-rate', type=float, default=0.1,
@@ -139,7 +142,6 @@ def main():
         help='Loss function to use during training')
     parser.add_argument('-batch-size', type=int, default=8,
         help='Size of each minibatchs for SGD')
-
 
     args = parser.parse_args()
     df = load_dataset(args.dataset)
@@ -153,6 +155,8 @@ def main():
 
     _, ax = plt.subplots(1,2,figsize=(15,5))
     display_loss_plot(model, ax)
+    display_accuracy_score_plot(model, ax)
+    plt.show()
 
 if __name__ == '__main__':
     main()

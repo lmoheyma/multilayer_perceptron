@@ -45,20 +45,24 @@ def display_loss_plot(model, ax):
     """
     Display Loss Function plot
     """
-    ax[0].plot(model.losses, label="Train loss")
-    ax[0].plot(model.losses_test, label="Val loss")
+    ax[0].plot(model.losses, label="training loss")
+    ax[0].plot(model.losses_test, label="validation loss")
     ax[0].legend()
     ax[0].set_xlabel("Epoch")
     ax[0].set_ylabel("Loss")
     ax[0].grid()
-    plt.show()
 
 @plot_print_info
-def display_accuracy_score_plot(scores):
+def display_accuracy_score_plot(model, ax):
     """
     Display Accuracy Score plot
     """
-    pass
+    ax[1].plot(model.accuracy, label="training acc")
+    ax[1].plot(model.accuracy_test, label="validation acc")
+    ax[1].legend()
+    ax[1].set_xlabel("Epoch")
+    ax[1].set_ylabel("Accuracy")
+    ax[1].grid()
 
 def list_of_ints(arg):
     return list(map(int, arg.split()))
