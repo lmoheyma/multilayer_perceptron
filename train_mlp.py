@@ -151,10 +151,9 @@ def main():
 
     args = parser.parse_args()
     df = load_dataset(args.dataset)
-    X_train, X_test, y_train, y_test = train_test_split(df)
 
-    X_train = min_max_scaling(X_train)
-    X_test = min_max_scaling(X_test)
+    df = data_preprocessing(df)
+    X_train, X_test, y_train, y_test = train_test_split(df)
 
     model = MultilayerPerceptron(X_train, X_test, y_train, y_test, args)
     model.fit()

@@ -9,7 +9,7 @@ class DataVisualizer:
         self.df = df
         self.features = df.select_dtypes('float64')
 
-    def render(self):
+    def histogram(self):
         nb_col = 5
         nb_row = 2
         plt.style.use('ggplot')
@@ -22,7 +22,12 @@ class DataVisualizer:
         handles, labels = ax[0, 0].get_legend_handles_labels()
         plt.legend(handles, labels, loc='best', borderpad=1.5, prop={'size': 12})
         self.save_plot('histogram')
-        plt.show()
+
+    def correlation_heatmap(self):
+        plt.figure(figsize=(18, 8))
+        heatmap = sns.heatmap(self.features.corr(), vmin=-1, vmax=1, annot=True)
+        heatmap.set_title('Correlation Heatmap', fontdict={'fontsize':12}, pad=12);
+        self.save_plot('correlation_heatmap')
 
     def save_plot(self, filename: str) -> None:
         try:
@@ -38,7 +43,9 @@ def main():
     df = load_dataset('datasets/data.csv')
     # df.drop('')
     visualizer = DataVisualizer(df)
-    visualizer.render()
+    # visualizer.histogram()
+    visualizer.correlation_heatmap()
+    plt.show()
 
 if __name__ == '__main__':
     main()
