@@ -3,11 +3,12 @@ import pandas as pd
 from argparse import ArgumentParser
 from utils import * 
 import pickle
+from weights_init import WeightInitializer
 
 pd.set_option('future.no_silent_downcasting', True)
 
 class MultilayerPerceptron:
-    def __init__(self, X_train, X_test, y_train, y_test, args):
+    def __init__(self, X_train, X_test, y_train, y_test, args, weight_initializer: WeightInitializer):
         self.X_train = X_train
         self.X_test = X_test
         self.y_train = y_train
@@ -21,6 +22,7 @@ class MultilayerPerceptron:
         self.losses_test = []
         self.accuracy = []
         self.accuracy_test = []
+        self.weight_initializer = weight_initializer
 
     def init_layers(self, size):
         self.hidden_layers = [np.zeros((size, layer_size)) for layer_size in self.layer_sizes]
@@ -29,8 +31,9 @@ class MultilayerPerceptron:
         self.weights = []
         self.biases = []
         for i in range(self.layer_sizes.shape[0] - 1):
-            weight_shape = (self.layer_sizes[i], self.layer_sizes[i+1])
-            self.weights.append(np.random.uniform(-0.1, 0.1, size=weight_shape))
+            fan_in = self.layer_sizes[i]
+            fan_out = self.layer_sizes[i+1]
+            self.weights.append(self.weight_initializer.initialize(fan_in, fan_out))
             bias_shape = (1, self.layer_sizes[i+1])
             self.biases.append(np.zeros(bias_shape))
 
@@ -41,7 +44,7 @@ class MultilayerPerceptron:
         return sigmoid * (1 - sigmoid)
 
     def softmax(self, x) -> float:
-        return self.sigmoid_function(x)
+        return np.exp(x) / np.sum(np.exp(x), axis=0)
 
     def binary_cross_entropy(self, y_pred: np.ndarray, y_true: np.ndarray) -> np.ndarray:
         epsilon = 1e-15
@@ -89,7 +92,7 @@ class MultilayerPerceptron:
         y_test = y_test.reshape(-1, 1)
 
         self.init_weights()
-        
+
         for epoch in range(self.epochs):
             perm = np.random.permutation(n_samples)
             X_train = X_train[perm]
@@ -148,6 +151,9 @@ def main():
         help='Loss function to use during training')
     parser.add_argument('-batch-size', type=int, default=8,
         help='Size of each minibatchs for SGD')
+    parser.add_argument('-weights-init', type=str, choices=["he", "xavier", "uniform"],
+        default="he",
+        help="Weights initialization methods : 'he', 'xavier' or 'uniform'")
 
     args = parser.parse_args()
     df = load_dataset(args.dataset)
@@ -155,7 +161,8 @@ def main():
     df = data_preprocessing(df)
     X_train, X_test, y_train, y_test = train_test_split(df)
 
-    model = MultilayerPerceptron(X_train, X_test, y_train, y_test, args)
+    initializer = WeightInitializer(method=args.weights_init)
+    model = MultilayerPerceptron(X_train, X_test, y_train, y_test, args, weight_initializer=initializer)
     model.fit()
 
     _, ax = plt.subplots(1,2,figsize=(15,5))
