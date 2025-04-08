@@ -4,11 +4,14 @@ from argparse import ArgumentParser
 from utils import * 
 import pickle
 from weights_init import WeightInitializer
+from activation_function import ActivationFunction
 
 pd.set_option('future.no_silent_downcasting', True)
 
 class MultilayerPerceptron:
-    def __init__(self, X_train, X_test, y_train, y_test, args, weight_initializer: WeightInitializer):
+    def __init__(self, X_train, X_test, y_train, y_test, args,
+                 weight_initializer: WeightInitializer,
+                 activation: ActivationFunction):
         self.X_train = X_train
         self.X_test = X_test
         self.y_train = y_train
@@ -23,6 +26,7 @@ class MultilayerPerceptron:
         self.accuracy = []
         self.accuracy_test = []
         self.weight_initializer = weight_initializer
+        self.activation_function = activation
 
     def init_layers(self, size):
         self.hidden_layers = [np.zeros((size, layer_size)) for layer_size in self.layer_sizes]
@@ -40,9 +44,6 @@ class MultilayerPerceptron:
     def sigmoid_function(self, x) -> float:
         return 1 / (1 + np.exp(-x))
 
-    def sigmoid_prime(self, sigmoid):
-        return sigmoid * (1 - sigmoid)
-
     def softmax(self, x) -> float:
         return np.exp(x) / np.sum(np.exp(x), axis=0)
 
@@ -58,9 +59,12 @@ class MultilayerPerceptron:
         h_l = batch
         self.hidden_layers[0] = h_l
         for i, weight in enumerate(self.weights):
-            z = np.dot(h_l, weight) + self.biases[i]
-            h_l = self.sigmoid_function(z)
-            self.hidden_layers[i+1] = h_l  
+            h_l = np.dot(h_l, weight)
+            if i < len(self.weights) - 1:
+                h_l = self.activation_function.base_function(h_l)
+            else:
+                h_l = self.sigmoid_function(h_l)
+            self.hidden_layers[i + 1] = h_l
         return h_l
 
     def back_propagation(self, output, batch_y):
@@ -69,7 +73,7 @@ class MultilayerPerceptron:
         deltas = [0] * nb_layers
         deltas[-1] = delta
         for i in range(nb_layers - 2, -1, -1):
-            delta = self.sigmoid_prime(self.hidden_layers[i+1]) * np.dot(deltas[i+1], self.weights[i+1].T)
+            delta = self.activation_function.prime_function(self.hidden_layers[i+1]) * np.dot(deltas[i+1], self.weights[i+1].T)
             deltas[i] = delta
         for i in range(nb_layers):
             grad_w = np.dot(self.hidden_layers[i].T, deltas[i]) / batch_y.shape[0]
@@ -87,7 +91,7 @@ class MultilayerPerceptron:
         y_train = self.y_train if isinstance(self.y_train, np.ndarray) else self.y_train.to_numpy()
         X_test = self.X_test.to_numpy() if hasattr(self.X_test, 'to_numpy') else self.X_test
         y_test = self.y_test if isinstance(self.y_test, np.ndarray) else self.y_test.to_numpy()
-        
+
         y_train = y_train.reshape(-1, 1)
         y_test = y_test.reshape(-1, 1)
 
@@ -151,9 +155,10 @@ def main():
         help='Loss function to use during training')
     parser.add_argument('-batch-size', type=int, default=8,
         help='Size of each minibatchs for SGD')
-    parser.add_argument('-weights-init', type=str, choices=["he", "xavier", "uniform"],
-        default="he",
-        help="Weights initialization methods : 'he', 'xavier' or 'uniform'")
+    parser.add_argument('-weights-init', type=str, choices=['he', 'xavier', 'uniform'],
+        default="uniform", help="Weights initialization methods : 'he', 'xavier' or 'uniform'")
+    parser.add_argument('-activation', type=str, choices=['sigmoid', 'relu', 'tanh'],
+        default='sigmoid', help="Activation function: 'sigmoid', 'tanh' or 'relu'")
 
     args = parser.parse_args()
     df = load_dataset(args.dataset)
@@ -162,7 +167,11 @@ def main():
     X_train, X_test, y_train, y_test = train_test_split(df)
 
     initializer = WeightInitializer(method=args.weights_init)
-    model = MultilayerPerceptron(X_train, X_test, y_train, y_test, args, weight_initializer=initializer)
+    activation_function = ActivationFunction(function=args.activation)
+
+    model = MultilayerPerceptron(X_train, X_test, y_train, y_test, args,
+        weight_initializer=initializer,
+        activation=activation_function)
     model.fit()
 
     _, ax = plt.subplots(1,2,figsize=(15,5))
