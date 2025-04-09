@@ -87,10 +87,10 @@ class MultilayerPerceptron:
     def fit(self):
         self.init_hyperparameters()
         n_samples = self.X_train.shape[0]
-        
+
         self.y_train = np.where(self.y_train == 'B', 1, 0)
         self.y_test = np.where(self.y_test == 'B', 1, 0)
-        
+
         X_train = self.X_train.to_numpy() if hasattr(self.X_train, 'to_numpy') else self.X_train
         y_train = self.y_train if isinstance(self.y_train, np.ndarray) else self.y_train.to_numpy()
         X_test = self.X_test.to_numpy() if hasattr(self.X_test, 'to_numpy') else self.X_test
@@ -131,11 +131,12 @@ class MultilayerPerceptron:
 
             print(f"Epoch {epoch+1}/{self.epochs} - train_loss: {epoch_loss:.4f} - val_loss: {val_loss:.4f} - train_acc: {epoch_acc:.4f} - val_acc: {val_acc:.4f}")
 
-    def save_weights(self, filename="weights.pkl") -> None:
+    def save_weights(self, activation_fn, filename="weights.pkl") -> None:
         model_data = {
-            "weights": self.weights,
-            "biases": self.biases,
-            "topology": self.layer_sizes
+            'weights': self.weights,
+            'biases': self.biases,
+            'topology': self.layer_sizes,
+            'activation': activation_fn
         }
         with open(filename, "wb") as f:
             pickle.dump(model_data, f)
@@ -144,8 +145,8 @@ class MultilayerPerceptron:
     def load_weights(self, filename="weights.pkl") -> None:
         with open(filename, "rb") as f:
             model_data = pickle.load(f)
-        print(f"Model loaded from {filename}")
-        return model_data["weights"], model_data["biases"], model_data["topology"]
+        print(f"Model loaded from {UGREEN}{filename}{RESET}")
+        return model_data.values()
 
 def main():
     parser = ArgumentParser(
@@ -170,7 +171,10 @@ def main():
         default='sigmoid', help="Activation function: 'sigmoid', 'tanh' or 'relu'")
 
     args = parser.parse_args()
-    df = load_dataset(args.dataset)
+    try:
+        df = load_dataset(args.dataset)
+    except IOError:
+        exit()
 
     df = data_preprocessing(df)
     X_train, X_test, y_train, y_test = train_test_split(df)
@@ -182,7 +186,7 @@ def main():
         weight_initializer=initializer,
         activation=activation_function)
     model.fit()
-    model.save_weights()
+    model.save_weights(args.activation)
 
     _, ax = plt.subplots(1,2,figsize=(15,5))
     display_loss_plot(model, ax)

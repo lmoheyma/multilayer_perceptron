@@ -8,7 +8,7 @@ def load_dataset(dataset_label: str) -> pd.core.frame.DataFrame:
         df = pd.read_csv(dataset_label)
     except Exception as e:
         print(f"{BHRED}Fail to read file '{RED}{dataset_label}{BHRED}'.{RESET}")
-        raise e
+        raise IOError
     return df
 
 def train_test_split(df: pd.core.frame.DataFrame, test_size=0.25) -> tuple:
