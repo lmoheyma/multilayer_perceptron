@@ -18,8 +18,8 @@ def train_test_split(df: pd.core.frame.DataFrame, test_size=0.25) -> tuple:
     X_test = df[train_size:]
     y_train = X_train['Diagnosis']
     y_test = X_test['Diagnosis']
-    X_train.drop(['Diagnosis', 'Index'], axis=1, inplace=True)
-    X_test.drop(['Diagnosis', 'Index'], axis=1, inplace=True)
+    X_train = X_train.drop(['Diagnosis', 'Index'], axis=1)
+    X_test = X_test.drop(['Diagnosis', 'Index'], axis=1)
 
     print(f'x_train shape : {X_train.shape}\nx_valid shape : {X_test.shape}')
     return X_train, X_test, y_train, y_test
@@ -38,7 +38,7 @@ def data_preprocessing(X):
         X.drop([feature], axis=1, inplace=True)
     features = X.select_dtypes('float64')
     features_col = features.columns
-    X[features_col].fillna(X[features_col].mean(), inplace=True)
+    X[features_col] = X[features_col].fillna(X[features_col].mean())
     X[features_col] = min_max_scaling(X[features_col])
     return X
 

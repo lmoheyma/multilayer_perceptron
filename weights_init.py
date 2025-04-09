@@ -2,7 +2,7 @@ import numpy as np
 from colors import *
 
 class WeightInitializer:
-    def __init__(self, method):
+    def __init__(self, method='uniform'):
         self.method = method
 
     def initialize(self, fan_in, fan_out):

@@ -10,17 +10,13 @@ pd.set_option('future.no_silent_downcasting', True)
 
 class MultilayerPerceptron:
     def __init__(self, X_train, X_test, y_train, y_test, args,
-                 weight_initializer: WeightInitializer,
-                 activation: ActivationFunction):
+                 weight_initializer=WeightInitializer,
+                 activation=ActivationFunction):
         self.X_train = X_train
         self.X_test = X_test
         self.y_train = y_train
         self.y_test = y_test
-        self.layer_sizes = np.array([self.X_train.shape[1]] + args.layer + [1])
-        self.epochs = args.epochs
-        self.learning_rate = args.learning_rate
-        self.loss_function = args.loss
-        self.batch_size = args.batch_size
+        self.args = args
         self.losses = []
         self.losses_test = []
         self.accuracy = []
@@ -28,10 +24,17 @@ class MultilayerPerceptron:
         self.weight_initializer = weight_initializer
         self.activation_function = activation
 
+    def init_hyperparameters(self):
+        self.epochs = self.args.epochs
+        self.learning_rate = self.args.learning_rate
+        self.loss_function = self.args.loss
+        self.batch_size = self.args.batch_size
+
     def init_layers(self, size):
         self.hidden_layers = [np.zeros((size, layer_size)) for layer_size in self.layer_sizes]
 
     def init_weights(self):
+        self.layer_sizes = np.array([self.X_train.shape[1]] + self.args.layer + [1])
         self.weights = []
         self.biases = []
         for i in range(self.layer_sizes.shape[0] - 1):
@@ -82,6 +85,7 @@ class MultilayerPerceptron:
             self.biases[i] -= self.learning_rate * grad_b
 
     def fit(self):
+        self.init_hyperparameters()
         n_samples = self.X_train.shape[0]
         
         self.y_train = np.where(self.y_train == 'B', 1, 0)
@@ -127,16 +131,21 @@ class MultilayerPerceptron:
 
             print(f"Epoch {epoch+1}/{self.epochs} - train_loss: {epoch_loss:.4f} - val_loss: {val_loss:.4f} - train_acc: {epoch_acc:.4f} - val_acc: {val_acc:.4f}")
 
-        return self.weights
-
     def save_weights(self, filename="weights.pkl") -> None:
+        model_data = {
+            "weights": self.weights,
+            "biases": self.biases,
+            "topology": self.layer_sizes
+        }
         with open(filename, "wb") as f:
-            pickle.dump(self.models, f)
+            pickle.dump(model_data, f)
         print_info(f'Weights saved in {UGREEN}{filename}')
 
     def load_weights(self, filename="weights.pkl") -> None:
         with open(filename, "rb") as f:
-            self.models = pickle.load(f)
+            model_data = pickle.load(f)
+        print(f"Model loaded from {filename}")
+        return model_data["weights"], model_data["biases"], model_data["topology"]
 
 def main():
     parser = ArgumentParser(
@@ -173,6 +182,7 @@ def main():
         weight_initializer=initializer,
         activation=activation_function)
     model.fit()
+    model.save_weights()
 
     _, ax = plt.subplots(1,2,figsize=(15,5))
     display_loss_plot(model, ax)

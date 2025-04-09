@@ -2,7 +2,7 @@ import numpy as np
 from colors import *
 
 class ActivationFunction:
-    def __init__(self, function):
+    def __init__(self, function='sigmoid'):
         self.function = function
 
     def base_function(self, x):
