@@ -10,7 +10,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Use a dataset to display accuracy score a model")
     parser.add_argument("-db", "--dataset", type=str,
-                        default='datasets/data.csv',
+                        default='../datasets/data.csv',
                         help="Path to the dataset you want to predict.")
     parser.add_argument("-w", "--weights", type=str, default='weights.pkl',
                         help="Path to the file containing the weights \

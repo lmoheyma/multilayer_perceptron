@@ -31,9 +31,9 @@ class DataVisualizer:
 
     def save_plot(self, filename: str) -> None:
         try:
-            if not os.path.isdir('plots'):
-                os.mkdir('plots')
-            plt.savefig(f'plots/{filename}.png')
+            if not os.path.isdir('../plots'):
+                os.mkdir('../plots')
+            plt.savefig(f'../plots/{filename}.png')
         except Exception:
             print(f"{BHRED}Fail to save file '{RED}{filename}{BHRED}'.{RESET}")
             exit(1)
@@ -41,7 +41,7 @@ class DataVisualizer:
 
 def main():
     try:
-        df = load_dataset('datasets/data.csv')
+        df = load_dataset('../datasets/data.csv')
     except IOError:
         exit()
     visualizer = DataVisualizer(df)

@@ -5,7 +5,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="Use a dataset to display accuracy score a model")
     parser.add_argument('-dataset', type=str,
-                        default='datasets/data.csv',
+                        default='../datasets/data.csv',
                         help="Path to the dataset you want to predict.")
     parser.add_argument("-test-size", type=float,
                         default=0.25,

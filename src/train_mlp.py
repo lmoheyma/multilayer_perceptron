@@ -162,7 +162,7 @@ class MultilayerPerceptron:
 def main():
     parser = ArgumentParser(
         description='Multilayer Perceptron')
-    parser.add_argument('-dataset', type=str, default='datasets/data.csv',
+    parser.add_argument('-dataset', type=str, default='../datasets/data.csv',
                         help='Path to a train dataset file to train the model')
     parser.add_argument('-layer', type=list_of_ints, default='26 26',
                         help='Numbers of perceptrons for each layer')
