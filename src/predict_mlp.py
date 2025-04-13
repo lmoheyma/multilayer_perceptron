@@ -50,7 +50,8 @@ def main():
     model.init_layers(len(X))
     pred = model.feed_forward(X)
     y_true = y.reshape(-1, 1)
-    print(f'Loss function (Binary Cross Entropy): {model.binary_cross_entropy(pred, y_true):.4f}')
+    print(f'Loss function (Binary Cross Entropy): \
+{model.binary_cross_entropy(pred, y_true):.4f}')
     pred = [1 if x > 0.5 else 0 for x in pred]
     print(f'Accuracy score: {np.mean(pred == y):.4f}')
 

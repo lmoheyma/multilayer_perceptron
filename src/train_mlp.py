@@ -164,7 +164,7 @@ def main():
                         help='Path to a train dataset file to train the model')
     parser.add_argument('-layer', type=list_of_ints, default='26 26',
                         help='Numbers of perceptrons for each layer')
-    parser.add_argument('-epochs', type=int, default=200,
+    parser.add_argument('-epochs', type=int, default=300,
                         help='Total number of iterations of all the training '
                         'data in one cycle for training the model')
     parser.add_argument('-learning-rate', type=float, default=0.1,
