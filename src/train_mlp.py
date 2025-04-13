@@ -15,7 +15,8 @@ pd.set_option('future.no_silent_downcasting', True)
 class MultilayerPerceptron:
     def __init__(self, X_train, X_test, y_train, y_test, args,
                  weight_initializer=WeightInitializer,
-                 activation=ActivationFunction):
+                 activation=ActivationFunction,
+                 output_activation=ActivationFunction):
         self.X_train = X_train
         self.X_test = X_test
         self.y_train = y_train
@@ -27,6 +28,7 @@ class MultilayerPerceptron:
         self.accuracy_test = []
         self.weight_init = weight_initializer
         self.activation_function = activation
+        self.output_activation = output_activation
 
     def init_hyperparameters(self):
         self.epochs = self.args.epochs
@@ -48,12 +50,6 @@ class MultilayerPerceptron:
             bias_shape = (1, self.layer_sizes[i+1])
             self.biases.append(np.zeros(bias_shape))
 
-    def sigmoid_function(self, x) -> float:
-        return 1 / (1 + np.exp(-x))
-
-    def softmax(self, x) -> float:
-        return np.exp(x) / np.sum(np.exp(x), axis=0)
-
     def binary_cross_entropy(self, y_pred, y_true):
         epsilon = 1e-15
         return -np.mean(y_true * np.log(y_pred + epsilon) + (1-y_true) *
@@ -71,7 +67,7 @@ class MultilayerPerceptron:
             if i < len(self.weights) - 1:
                 h_l = self.activation_function.base_function(h_l)
             else:
-                h_l = self.sigmoid_function(h_l)
+                h_l = self.output_activation.base_function(h_l)
             self.hidden_layers[i + 1] = h_l
         return h_l
 
@@ -141,18 +137,20 @@ class MultilayerPerceptron:
 {epoch_loss:.4f} - val_loss: {val_loss:.4f} - train_acc: {epoch_acc:.4f} \
 - val_acc: {val_acc:.4f}")
 
-    def save_weights(self, activation_fn, filename="weights.pkl") -> None:
+    def save_weights(self, activation_fn,
+                     filename="weights_and_topology.pkl"):
         model_data = {
             'weights': self.weights,
             'biases': self.biases,
             'topology': self.layer_sizes,
-            'activation': activation_fn
+            'layer_activation': activation_fn['layer'],
+            'output_activation': activation_fn['output']
         }
         with open(filename, "wb") as f:
             pickle.dump(model_data, f)
-        print_info(f'Weights saved in {UGREEN}{filename}')
+        print_info(f'Weights and topology saved in {UGREEN}{filename}')
 
-    def load_weights(self, filename="weights.pkl") -> None:
+    def load_weights(self, filename="weights_and_topology.pkl") -> None:
         with open(filename, "rb") as f:
             model_data = pickle.load(f)
         print(f"Model loaded from {UGREEN}{filename}{RESET}")
@@ -184,6 +182,11 @@ def main():
                         default='sigmoid',
                         help="Activation function: "
                         "'sigmoid', 'tanh' or 'relu'")
+    parser.add_argument('-output-activation', type=str,
+                        choices=['sigmoid', 'softmax'],
+                        default='sigmoid',
+                        help="Activation function for output layer: "
+                        "'sigmoid' or 'softmax'")
 
     args = parser.parse_args()
     try:
@@ -196,12 +199,15 @@ def main():
 
     initializer = WeightInitializer(method=args.weights_init)
     activation_function = ActivationFunction(function=args.activation)
+    output_activation = ActivationFunction(function=args.output_activation)
 
     model = MultilayerPerceptron(X_train, X_test, y_train, y_test, args,
                                  weight_initializer=initializer,
-                                 activation=activation_function)
+                                 activation=activation_function,
+                                 output_activation=output_activation)
     model.fit()
-    model.save_weights(args.activation)
+    model.save_weights({'layer': args.activation,
+                        'output': args.output_activation})
 
     _, ax = plt.subplots(1, 2, figsize=(15, 5))
     display_loss_plot(model, ax)

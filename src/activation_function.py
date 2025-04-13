@@ -14,6 +14,8 @@ class ActivationFunction:
                 return (abs(x) + x) / 2
             case 'tanh':
                 return np.tanh(x)
+            case 'softmax':
+                return np.exp(x) / np.sum(np.exp(x), axis=0)
             case _:
                 raise ValueError(f"{BHRED}Unknown activation function: \
                                  {RED}{self.function}{BHRED}.{RESET}")
