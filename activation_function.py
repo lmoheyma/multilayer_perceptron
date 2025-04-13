@@ -1,5 +1,6 @@
 import numpy as np
-from colors import *
+from colors import BHRED, RED, RESET
+
 
 class ActivationFunction:
     def __init__(self, function='sigmoid'):
@@ -14,7 +15,8 @@ class ActivationFunction:
             case 'tanh':
                 return np.tanh(x)
             case _:
-                raise ValueError(f"{BHRED}Unknown activation function: {RED}{self.function}{BHRED}.{RESET}")
+                raise ValueError(f"{BHRED}Unknown activation function: \
+                                 {RED}{self.function}{BHRED}.{RESET}")
 
     def prime_function(self, x):
         match self.function:
@@ -25,4 +27,5 @@ class ActivationFunction:
             case 'tanh':
                 return 1 - x**2
             case _:
-                raise ValueError(f"{BHRED}Unknown activation function: {RED}{self.function}{BHRED}.{RESET}")
+                raise ValueError(f"{BHRED}Unknown activation function: \
+                                 {RED}{self.function}{BHRED}.{RESET}")

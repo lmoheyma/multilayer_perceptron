@@ -1,5 +1,6 @@
 import numpy as np
-from colors import *
+from colors import BHRED, RED, RESET
+
 
 class WeightInitializer:
     def __init__(self, method='uniform'):
@@ -10,8 +11,10 @@ class WeightInitializer:
             case 'he':
                 return np.random.randn(fan_in, fan_out) * np.sqrt(2. / fan_in)
             case 'xavier':
-                return np.random.randn(fan_in, fan_out) * np.sqrt(2. / (fan_in + fan_out))
+                return np.random.randn(fan_in, fan_out) * \
+                    np.sqrt(2. / (fan_in + fan_out))
             case 'uniform':
                 return np.random.uniform(-0.1, 0.1, size=(fan_in, fan_out))
             case _:
-                raise ValueError(f"{BHRED}Unknown weight initialization method: {RED}{self.method}{BHRED}.{RESET}")
+                raise ValueError(f"{BHRED}Unknown weight initialization \
+                                 method: {RED}{self.method}{BHRED}.{RESET}")

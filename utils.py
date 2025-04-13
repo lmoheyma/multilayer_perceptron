@@ -1,15 +1,16 @@
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-from colors import *
+from colors import RED, BHRED, RESET, CYANB, BWHITE
+
 
 def load_dataset(dataset_label: str) -> pd.core.frame.DataFrame:
     try:
         df = pd.read_csv(dataset_label)
-    except Exception as e:
-        print(f"{BHRED}Fail to read file '{RED}{dataset_label}{BHRED}'.{RESET}")
+    except Exception:
+        print(f"{BHRED}Fail to read file '{RED}{dataset_label}{BHRED}'{RESET}")
         raise IOError
     return df
+
 
 def train_test_split(df: pd.core.frame.DataFrame, test_size=0.25) -> tuple:
     df = df.sample(frac=1)
@@ -24,16 +25,18 @@ def train_test_split(df: pd.core.frame.DataFrame, test_size=0.25) -> tuple:
     print(f'x_train shape : {X_train.shape}\nx_valid shape : {X_test.shape}')
     return X_train, X_test, y_train, y_test
 
+
 def min_max_scaling(X):
     min_val = np.min(X, axis=0)
     max_val = np.max(X, axis=0)
     return (X - min_val) / (max_val - min_val)
 
+
 def data_preprocessing(X):
     features = X.select_dtypes('float64')
-    corr_matrix = features.corr().abs()
-    upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
-    features_to_drop = [column for column in upper.columns if any(upper[column] > 0.98)]
+    corr_mat = features.corr().abs()
+    upper = corr_mat.where(np.triu(np.ones(corr_mat.shape), k=1).astype(bool))
+    features_to_drop = [col for col in upper.columns if any(upper[col] > 0.98)]
     for feature in features_to_drop:
         X.drop([feature], axis=1, inplace=True)
     features = X.select_dtypes('float64')
@@ -42,14 +45,17 @@ def data_preprocessing(X):
     X[features_col] = min_max_scaling(X[features_col])
     return X
 
+
 def print_info(message: str) -> None:
     print(f'{CYANB}{BWHITE}[INFO]{RESET}{BWHITE} {message}{RESET}')
+
 
 def plot_print_info(func):
     def wrapper(model, ax):
         func(model, ax)
         print_info(f'{func.__doc__.strip()}...')
     return wrapper
+
 
 @plot_print_info
 def display_loss_plot(model, ax):
@@ -63,6 +69,7 @@ def display_loss_plot(model, ax):
     ax[0].set_ylabel("Loss")
     ax[0].grid()
 
+
 @plot_print_info
 def display_accuracy_score_plot(model, ax):
     """
@@ -75,9 +82,6 @@ def display_accuracy_score_plot(model, ax):
     ax[1].set_ylabel("Accuracy")
     ax[1].grid()
 
+
 def list_of_ints(arg):
     return list(map(int, arg.split()))
-
-if __name__ == '__main__':
-    df = load_dataset('datasets/data.csv')
-    print(df.columns)
